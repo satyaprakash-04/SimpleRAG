@@ -1,0 +1,19 @@
+[project]
+name = "rag_app"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.141.1",
+    "httpx>=0.28.1",
+    "ollama>=0.6.2",
+    "pgvector>=0.5.0",
+    "psycopg2>=2.9.13",
+    "psycopg[binary,pool]>=3.3.4",
+    "pymupdf>=1.28.2",
+    "python-dotenv>=1.2.2",
+    "sentence-transformers>=6.0.1",
+    "sqlalchemy>=2.0.52",
+    "uvicorn>=0.52.3",
+]

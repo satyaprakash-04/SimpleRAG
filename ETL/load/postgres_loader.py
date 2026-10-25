@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 from ETL.load.load import BaseLoader
 from app.models.document import Document
@@ -19,6 +19,8 @@ class PostgresLoader(BaseLoader):
     ):
         session = SessionLocal()
         try:
+            cleanup_query = text('truncate public.documents cascade;truncate public.document_chunks RESTART IDENTITY;')
+            session.execute(cleanup_query)
             document = Document(
                 id=document_id,
                 file_name=file_name,

@@ -5,7 +5,8 @@ class ExtractedDocument:
     file_path: str
     file_name: str
     extension: str
-    page_number: int
+    page_start: int
+    page_end: int
     text: str
 
 

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 from app.models.chunk import DocumentChunk
 from uuid import UUID
@@ -11,12 +12,12 @@ class BaseExtractor(ABC):
     def extract_paths(self, paths: str) -> list[str]:
         ...
 
-    def extract_details(self,path: str) -> list[dict[str, str | list[dict[str, str]]]]:
+    def extract_details(self,path: str) -> list[dict[str, Any]]:
         ...
 
 class BaseFileReader(ABC):
     @abstractmethod
-    def read(self, path) -> list[dict[str, str]]:
+    def read(self, path) -> dict[str, Any]:
         ...
 
 

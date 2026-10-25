@@ -52,8 +52,8 @@ class RecursiveChunker(BaseChunker):
                 content=chunk,
                 file_path=document.file_path,
                 file_name=document.file_name,
-                page_start=document.page_number,
-                page_end=document.page_number,
+                page_start=document.page_start,
+                page_end=document.page_end,
             )
             for index, chunk in enumerate(chunks)
         ]

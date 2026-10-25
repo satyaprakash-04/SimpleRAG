@@ -29,7 +29,8 @@ class DocumentTransformer(BaseTransformer):
             file_path=document['file_path'],
             file_name=document['file_name'],
             extension=document['extension'],
-            page_number=document['page_number'],
+            page_start=document['page_start'],
+            page_end=document['page_end'],
             text=cleaned_text,
         )
 

@@ -28,7 +28,7 @@ class FileExtractor(BaseExtractor):
             if file_details is not None:
                 reader = self.get_reader(file_details)
                 pdf_data =  reader.read(file)
-                file_details['pdf_data'] = pdf_data
+                file_details['file_data'] = pdf_data
                 books_data.append(file_details)
         return books_data
 

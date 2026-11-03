@@ -24,10 +24,12 @@ The application also supports streaming responses, allowing users to receive gen
 ```text
                     Client
                       |
-                      v
-                 FastAPI
+                      |
                       |
           +-----------+-----------+
+          |                       |
+          |                       v
+          |                    Fast API
           |                       |
           v                       v
       Ingestion API            Chat API
@@ -99,7 +101,7 @@ ollama --version
 ## 1. Clone the repository
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
+git clone <https://github.com/satyaprakash-04/SimpleRAG.git>
 
 cd SimpleRAG
 ```

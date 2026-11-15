@@ -317,7 +317,8 @@ Content-Type: application/json
 
 ```json
 {
-    "question": "Explain polymorphism in Python."
+  "session_id":"bb767a38-a20d-4487-978b-eb82694229d4",
+  "question": "Explain polymorphism in Python."
 }
 ```
 
@@ -326,7 +327,7 @@ Example cURL:
 ```bash
 curl -N -X POST "http://127.0.0.1:8000/chat/stream" \
     -H "Content-Type: application/json" \
-    -d "{\"question\":\"Explain polymorphism in Python\"}"
+    -d "{\"session_id\":\"bb767a38-a20d-4487-978b-eb82694229d4\",\"question\":\"Explain polymorphism in Python\"}"
 ```
 
 The generated answer is streamed progressively to the client.
@@ -390,8 +391,8 @@ Future improvements can include:
 - [x] LangChain integration.
 - [x] Ollama and Gemma 4 integration.
 - [x] Streaming LLM responses.
-- [ ] Conversation history and session isolation.
-- [ ] Token-aware context management.
+- [x] Conversation history and session isolation.
+- [x] Token-aware context management.
 - [ ] Reranking and improved retrieval.
 - [ ] Source citations in streamed responses.
 - [ ] Background ingestion workers.

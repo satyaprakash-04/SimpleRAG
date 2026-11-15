@@ -8,7 +8,6 @@ from ETL.transform.chunker import RecursiveChunker
 from ETL.transform.cleaner import TextCleaner
 from ETL.transform.transformer import DocumentTransformer
 from app.clients.sentense_transformer_client import SentenceTransformerClient
-from database.connector import SessionLocal
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 

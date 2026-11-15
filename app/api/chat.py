@@ -1,83 +1,108 @@
-from collections.abc import AsyncIterator
-from fastapi import APIRouter, Depends
+import logging
+from uuid import UUID
+
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from pydantic import BaseModel, Field
 
 from database.connector import SessionLocal
-from app.repositories.vector_repository import VectorRepository
-from app.services.rag_service import RAGService
-from app.clients.sentense_transformer_client import (
-    SentenceTransformerClient,
+from app.repositories.conversation_repository import (
+    ConversationRepository,
 )
+from app.repositories.vector_repository import VectorRepository
+from app.services.chat_service import ChatService
+from app.utils.sse import format_sse
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+logger = logging.getLogger(__name__)
 
 
 class ChatRequest(BaseModel):
-    question: str
-
-
-@router.post("/")
-def chat(request: ChatRequest, db: Session = Depends(get_db)):
-    # In production, share these heavyweight clients through
-    # application lifespan/dependency injection rather than
-    # constructing a model for every request.
-    embedding_client = SentenceTransformerClient(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    session_id: UUID
+    question: str = Field(
+        min_length=1,
+        max_length=10000,
     )
 
-    vector_repository = VectorRepository(db)
-
-    rag_service = RAGService(
-        embedding_client=embedding_client,
-        vector_repository=vector_repository,
-        model_name="gemma4:e2b",
-        num_ctx=4096,
-        top_k=5,
-    )
-
-    return rag_service.ask(request.question)
 
 @router.post("/stream")
 async def stream_chat(
-    request: ChatRequest,
-    db: Session = Depends(get_db),
+    payload: ChatRequest,
+    request: Request,
 ):
-    # Use your application's shared, initialized RAG service.
-    embedding_client = SentenceTransformerClient(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
+    db = SessionLocal()
 
-    vector_repository = VectorRepository(db)
+    try:
+        rag_service = request.app.state.rag_service
 
-    rag_service = RAGService(
-        embedding_client=embedding_client,
-        vector_repository=vector_repository,
-        model_name="gemma4:e2b",
-        num_ctx=4096,
-        top_k=5,
-    )
+        conversation_repository = ConversationRepository(db)
 
-    async def generate() -> AsyncIterator[str]:
-        async for token in rag_service.stream_answer(
-            request.question
-        ):
-            yield token
+        # Validate the session before starting the HTTP stream.
+        conversation = (
+            conversation_repository.get_by_session_id(
+                payload.session_id
+            )
+        )
+
+        if conversation is None:
+            db.close()
+            raise HTTPException(
+                status_code=404,
+                detail="Conversation session not found",
+            )
+
+        vector_repository = VectorRepository(db)
+
+        chat_service = ChatService(
+            conversation_repository=conversation_repository,
+            vector_repository=vector_repository,
+            rag_service=rag_service,
+        )
+
+    except HTTPException:
+        raise
+    except Exception:
+        db.close()
+        logger.exception("Failed to initialize chat request")
+        raise HTTPException(
+            status_code=500,
+            detail="Could not initialize chat request",
+        )
+
+    async def event_generator():
+        try:
+            async for event in chat_service.stream_chat(
+                session_id=payload.session_id,
+                question=payload.question,
+            ):
+                yield format_sse(
+                    event=event["type"],
+                    data=event["data"],
+                )
+
+        except Exception:
+            logger.exception(
+                "Chat generation failed for session %s",
+                payload.session_id,
+            )
+
+            yield format_sse(
+                event="error",
+                data={
+                    "message": "An error occurred while generating the response.",
+                },
+            )
+
+        finally:
+            db.close()
 
     return StreamingResponse(
-        generate(),
-        media_type="text/plain; charset=utf-8",
+        event_generator(),
+        media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
         },
     )
